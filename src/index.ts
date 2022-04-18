@@ -3,30 +3,22 @@ type TupleShift<T extends any[]> = T extends [N: any, ...R: infer R]
 	: never[];
 
 type VectorIndex<
-	Dimensions extends number[],
 	Curried extends number[],
 	Rest extends number[],
 	Value = unknown
 > = Rest['length'] extends 1
 	? Value
-	: SubVector<Dimensions, [...Curried, Rest[0]], TupleShift<Rest>, Value>;
+	: SubVector<[...Curried, Rest[0]], TupleShift<Rest>, Value>;
 
 export class SubVector<
-	Dimensions extends number[],
 	Curried extends number[],
 	Rest extends number[],
 	Value = unknown
 > {
-	//root: Vector<Dimensions, Value>;
-	curried: Curried;
-	//rest: Rest;
-	[index: number]: VectorIndex<Dimensions, Curried, Rest, Value>;
+	[index: number]: VectorIndex<Curried, Rest, Value>;
 
-	constructor(root: Vector<Dimensions, Value>, curried: Curried, rest: Rest) {
-		//this.root = root;
+	constructor(root: Vector<[...Curried, ...Rest], Value>, curried: Curried, rest: Rest) {
 		const self = this;
-		this.curried = curried;
-		//this.rest = rest;
 
 		for (let i = 0; i < rest[0]; i++) {
 			const descriptor: PropertyDescriptor = {
@@ -35,9 +27,11 @@ export class SubVector<
 			};
 			if (rest.length === 1) {
 				descriptor.get = (): Value => {
+                    // @ts-ignore
 					return root.get(...curried, i);
 				};
 				descriptor.set = (v: Value) => {
+                    // @ts-ignore
 					root.set(v, ...curried, i);
 				};
 			} else {
@@ -45,7 +39,7 @@ export class SubVector<
 					const value = new SubVector(
 						root,
 						[...curried, i],
-						rest.slice(1) as TupleShift<Rest>
+						rest.slice(1)
 					);
 					Object.defineProperty(self, i, {
 						value,
@@ -61,11 +55,11 @@ export class SubVector<
 }
 
 export abstract class Vector<Dimensions extends number[], Value = unknown> {
-	dimensions: Dimensions;
-	[index: number]: VectorIndex<Dimensions, [], Dimensions, Value>;
+	readonly dimensions: Dimensions;
+	[index: number]: VectorIndex<[], Dimensions, Value>;
 
 	constructor(...dimensions: Dimensions) {
-		this.dimensions = dimensions;
+		this.dimensions = Object.freeze(dimensions) as Readonly<Dimensions>;
 		const root = this;
 
 		for (let i = 0; i < dimensions[0]; i++) {

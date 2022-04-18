@@ -1,6 +1,6 @@
 {
   "name": "@tootallnate/vector",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Abstract class to implement Vector syntax (a.k.a. N-Dimensional Arrays)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
